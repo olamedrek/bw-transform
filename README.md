@@ -1,1 +1,1 @@
-# bw-transform
+# Burrows–Wheeler transform
