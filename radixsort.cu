@@ -11,12 +11,16 @@ void computeLocalPositions(int* in, int n, int* pos, int k, int* zerosInBlocks) 
 
 	__shared__ int sh[2048];
 
-	int realShSize = blockIdx.x == gridDim.x - 1 ? 
+	int realShSize = 
+		blockIdx.x == gridDim.x - 1 ? 
 		n - blockIdx.x * 2048 : 2048;
 
 	if(id >= realShSize) return;
 
-	int bit = (in[thid] >> k) & 1;
+	int bit = k < 32 ? 
+		(in[3 * thid] >> k) & 1 : 
+		(in[3 * thid + 1] >> (k - 32)) & 1;
+
 	sh[id] = bit;
 
 	for(int offset = 1; offset < 2048; offset *= 2) {
@@ -52,24 +56,22 @@ Result:
 	[pos] - global target positions */
 void computeGlobalPositions(int* in, int n, int* pos, int k, int* zerosPref) {
 	int thid = blockDim.x * blockIdx.x + threadIdx.x;
-	int id = threadIdx.x;
 
-	__shared__ int sh[2048];
+	if(thid >= n) return;
+
+	int bit = k < 32 ? 
+		(in[3 * thid] >> k) & 1 : 
+		(in[3 * thid + 1] >> (k - 32)) & 1;
 
 	int elementsBefore = blockIdx.x * 2048;
 
-	int realShSize = blockIdx.x < gridDim.x - 1 ? 
-		2048 : n - elementsBefore;
-
-	if(id >= realShSize) return;
-
-	sh[id] = in[thid];
-
-	int zerosBefore = blockIdx.x == 0 ? 
+	int zerosBefore = 
+		blockIdx.x == 0 ? 
 		0 : zerosPref[blockIdx.x - 1];
+
 	int zerosAfter = zerosPref[gridDim.x - 1] - zerosPref[blockIdx.x];
 	
-	if(((sh[id] >> k) & 1) == 0) {
+	if(bit == 0) {
 		pos[thid] += zerosBefore;
 	} else {
 		pos[thid] += zerosAfter + elementsBefore;
@@ -85,6 +87,8 @@ void permute(int* in, int n, int* out, int* pos) {
 
 	if(thid >= n) return;
 
-	out[pos[thid]] = in[thid];
+	out[3 * pos[thid]] = in[3 * thid];
+	out[3 * pos[thid] + 1] = in[3 * thid + 1];
+	out[3 * pos[thid] + 2] = in[3 * thid + 2];
 }
 }

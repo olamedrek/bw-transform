@@ -24,23 +24,23 @@ int* radixsort(int* T, int n) {
 	int blocks_per_grid = (n + 2047)/2048;
 	int threads_per_block = 1024;	
 
-	cuMemHostRegister(T, sizeof(int) * n, 0);
+	cuMemHostRegister(T, sizeof(int) * n * 3, 0);
 
 	CUdeviceptr in, pos, out, zerosInBlocks;
-	cuMemAlloc(&in, sizeof(int) * n);
+	cuMemAlloc(&in, sizeof(int) * n * 3);
 	cuMemAlloc(&pos, sizeof(int) * n);
-	cuMemAlloc(&out, sizeof(int) * n);
+	cuMemAlloc(&out, sizeof(int) * n * 3);
 	cuMemAlloc(&zerosInBlocks, sizeof(int) * blocks_per_grid);
 
-	cuMemcpyHtoD(in, T, sizeof(int) * n);
+	cuMemcpyHtoD(in, T, sizeof(int) * n * 3);
 	
 	int* zerosInBlocksHost = new int[blocks_per_grid];
 	cuMemHostRegister(zerosInBlocksHost, sizeof(int) * blocks_per_grid, 0);
 	
-	int* sorted = new int[n];
-	cuMemHostRegister(sorted, sizeof(int) * n, 0);
+	int* sorted = new int[n * 3];
+	cuMemHostRegister(sorted, sizeof(int) * n * 3, 0);
 	
-	for(int k = 0; k < 31; k++) {
+	for(int k = 32; k < 63; k++) {
 		void* args1[] = {&in, &n, &pos, &k, &zerosInBlocks};
 		cuLaunchKernel(computeLocalPositions, blocks_per_grid, 1, 1, threads_per_block, 1, 1, 0, 0, args1, 0);
 
@@ -56,9 +56,12 @@ int* radixsort(int* T, int n) {
 		cuLaunchKernel(permute, blocks_per_grid, 1, 1, threads_per_block, 1, 1, 0, 0, args3, 0);
 		
 		swap(in, out);
+
+		if(k == 62) k = -1;
+		if(k == 30) break;
 	}
 
-	cuMemcpyDtoH(sorted, in, sizeof(int) * n);
+	cuMemcpyDtoH(sorted, in, sizeof(int) * n * 3);
 	
     cuCtxDestroy(cuContext);
 

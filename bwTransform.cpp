@@ -6,18 +6,8 @@
 
 using namespace std;
 
-void bubblesort(int curr[][3], int n) {
-	for(int i = 0; i < n; i++) {
-		for(int j = 1; j < n; j++) {
-			if(curr[j][0] < curr[j-1][0] || (curr[j][0] == curr[j-1][0] && curr[j][1] < curr[j-1][1])) {
-				swap(curr[j], curr[j-1]);
-			}
-		}
-	}
-}
-
 void computeSuffixArray(char* str, int n, int* res) {
-	int curr[n][3];
+	int* curr = new int[3 * n];
 	int positions[n]; 
 
 	for(int i = 0; i < n; i++) {
@@ -26,18 +16,18 @@ void computeSuffixArray(char* str, int n, int* res) {
 
 	for(int len = 1; len <= n; len++) {
 		for(int i = 0; i < n; i++) {
-			curr[i][0] = positions[i];
-			curr[i][1] = i + len - 1 < n ? positions[i + len - 1] : -1;
-			curr[i][2] = i;
+			curr[3 * i] = positions[i];
+			curr[3 * i + 1] = i + len - 1 < n ? positions[i + len - 1] : -1;
+			curr[3 * i + 2] = i;
 		}
 
-		bubblesort(curr, n);
+		curr = radixsort(curr, n);
 
 		for(int i = 0, prevPos = -1; i < n; i++) {
-			if(i > 0 && curr[i][0] == curr[i-1][0] && curr[i][1] == curr[i-1][1]) { 
-				positions[curr[i][2]] = prevPos;
+			if(i > 0 && curr[3 * i] == curr[3 * (i-1)] && curr[3 * i + 1] == curr[3 * (i-1) + 1]) { 
+				positions[curr[3 * i + 2]] = prevPos;
 			} else {
-				positions[curr[i][2]] = ++prevPos;
+				positions[curr[3 * i + 2]] = ++prevPos;
 			}
 		}	
 	}
@@ -45,6 +35,8 @@ void computeSuffixArray(char* str, int n, int* res) {
 	for(int i = 0; i < n; i++) {
 		res[positions[i]] = i;
 	}
+
+	delete[] curr;
 }
 
 void takeLastColumn(char* str, int* suffArray, int n, char* result) {
