@@ -1,4 +1,5 @@
 #include "cuda.h"
+#include "radixsort.h"
 #include <cstdio>
 #include <climits>
 #include <algorithm>
