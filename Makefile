@@ -25,7 +25,7 @@ CFLAGS += $(COMMONFLAGS)
 
 
 
-CUDA_OBJS = bwTransform.ptx radixsort.ptx
+CUDA_OBJS = radixsort.ptx
 OBJS = demo.cpp.o bwTransform.cpp.o radixsort.cpp.o
 TARGET = solution.x
 LINKLINE = $(LINK) -o $(TARGET) $(OBJS) $(LIB_CUDA)
