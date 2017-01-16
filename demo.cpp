@@ -8,7 +8,6 @@
 using namespace std;
 
 int main() {
-
 	int n;
 	scanf("%d", &n);
 
@@ -19,7 +18,7 @@ int main() {
 
 	char* out = bwEncode(in, n + 2);
 	
-	printf("%s\n", out);
+	printf("%.*s\n", n + 2, out);
 
 	delete[] in;
 	delete[] out;

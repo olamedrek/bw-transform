@@ -14,10 +14,10 @@ void computeSuffixArray(char* str, int n, int* res) {
 		positions[i] = str[i];
 	}
 
-	for(int len = 1; len <= n; len++) {
+	for(int len = 1; len < n; len *= 2) {
 		for(int i = 0; i < n; i++) {
 			curr[3 * i] = positions[i];
-			curr[3 * i + 1] = i + len - 1 < n ? positions[i + len - 1] : -1;
+			curr[3 * i + 1] = i + len < n ? positions[i + len] : -1;
 			curr[3 * i + 2] = i;
 		}
 
@@ -29,7 +29,7 @@ void computeSuffixArray(char* str, int n, int* res) {
 			} else {
 				positions[curr[3 * i + 2]] = ++prevPos;
 			}
-		}	
+		}
 	}
 
 	for(int i = 0; i < n; i++) {
@@ -46,7 +46,6 @@ void takeLastColumn(char* str, int* suffArray, int n, char* result) {
 }
 
 char* bwEncode(char* str, int n) {
-
 	int* suffArray = new int[n];
 	computeSuffixArray(str, n, suffArray);
 
