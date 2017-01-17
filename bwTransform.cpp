@@ -1,5 +1,6 @@
 #include "cuda.h"
 #include "radixsort.h"
+#include "bwTransform.h"
 #include <cstdio>
 #include <climits>
 #include <algorithm>
@@ -56,3 +57,40 @@ char* bwEncode(char* str, int n) {
     
 	return encoded;
 }
+
+char* bwDecode(char* encoded, int n) {
+	const int MAXCHAR = 256;
+	int cnt[MAXCHAR];
+
+	for(int i = 0; i < MAXCHAR; i++) {
+		cnt[i] = 0;
+	}
+
+	for(int i = 0; i < n; i++) {
+		cnt[encoded[i]]++;
+	}
+	
+	for(int i = 1; i < MAXCHAR; i++) {
+		cnt[i] += cnt[i-1];
+	}
+
+	char *decoded = new char[n];
+
+	int j = n - 1;
+	decoded[n - 1] = END_SYMBOL;
+
+	for(int i = n - 2; i >= 0; i--) {
+		char c = encoded[j];
+		decoded[i] = c;
+		
+		int cntc = 0;
+		for (int k = 0; k <= j; k++) if (encoded[k] == c) {
+			cntc++;
+		}
+		
+		j = (c > 0 ? cnt[c-1] : 0) + cntc - 1;
+	}
+
+	return decoded;
+}
+
