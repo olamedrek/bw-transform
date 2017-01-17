@@ -1,3 +1,4 @@
+#include "radixsort.h"
 #include "cuda.h"
 #include <cstdio>
 #include <climits>
@@ -21,8 +22,7 @@ int* radixsort(int* T, int n) {
     cuModuleGetFunction(&computeGlobalPositions, cuModule, "computeGlobalPositions");
     cuModuleGetFunction(&permute, cuModule, "permute");
 	
-	int blocks_per_grid = (n + 2047)/2048;
-	int threads_per_block = 1024;	
+	const int BLOCKS_PER_GRID = (n + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
 	cuMemHostRegister(T, sizeof(int) * n * 3, 0);
 
@@ -30,30 +30,30 @@ int* radixsort(int* T, int n) {
 	cuMemAlloc(&in, sizeof(int) * n * 3);
 	cuMemAlloc(&pos, sizeof(int) * n);
 	cuMemAlloc(&out, sizeof(int) * n * 3);
-	cuMemAlloc(&zerosInBlocks, sizeof(int) * blocks_per_grid);
+	cuMemAlloc(&zerosInBlocks, sizeof(int) * BLOCKS_PER_GRID);
 
 	cuMemcpyHtoD(in, T, sizeof(int) * n * 3);
 	
-	int* zerosInBlocksHost = new int[blocks_per_grid];
-	cuMemHostRegister(zerosInBlocksHost, sizeof(int) * blocks_per_grid, 0);
+	int* zerosInBlocksHost = new int[BLOCKS_PER_GRID];
+	cuMemHostRegister(zerosInBlocksHost, sizeof(int) * BLOCKS_PER_GRID, 0);
 	
 	int* sorted = new int[n * 3];
 	cuMemHostRegister(sorted, sizeof(int) * n * 3, 0);
 	
 	for(int k = 32; k < 63; k++) {
 		void* args1[] = {&in, &n, &pos, &k, &zerosInBlocks};
-		cuLaunchKernel(computeLocalPositions, blocks_per_grid, 1, 1, threads_per_block, 1, 1, 0, 0, args1, 0);
+		cuLaunchKernel(computeLocalPositions, BLOCKS_PER_GRID, 1, 1, THREADS_PER_BLOCK, 1, 1, 0, 0, args1, 0);
 
-		cuMemcpyDtoH(zerosInBlocksHost, zerosInBlocks, sizeof(int) * blocks_per_grid);
-		for(int i = 1; i < blocks_per_grid; i++)
+		cuMemcpyDtoH(zerosInBlocksHost, zerosInBlocks, sizeof(int) * BLOCKS_PER_GRID);
+		for(int i = 1; i < BLOCKS_PER_GRID; i++)
 			zerosInBlocksHost[i] += zerosInBlocksHost[i-1];
-		cuMemcpyHtoD(zerosInBlocks, zerosInBlocksHost, sizeof(int) * blocks_per_grid);
+		cuMemcpyHtoD(zerosInBlocks, zerosInBlocksHost, sizeof(int) * BLOCKS_PER_GRID);
 
 		void* args2[] = {&in, &n, &pos, &k, &zerosInBlocks};
-		cuLaunchKernel(computeGlobalPositions, blocks_per_grid, 1, 1, threads_per_block, 1, 1, 0, 0, args2, 0);
+		cuLaunchKernel(computeGlobalPositions, BLOCKS_PER_GRID, 1, 1, THREADS_PER_BLOCK, 1, 1, 0, 0, args2, 0);
 		
 		void* args3[] = {&in, &n, &out, &pos};
-		cuLaunchKernel(permute, blocks_per_grid, 1, 1, threads_per_block, 1, 1, 0, 0, args3, 0);
+		cuLaunchKernel(permute, BLOCKS_PER_GRID, 1, 1, THREADS_PER_BLOCK, 1, 1, 0, 0, args3, 0);
 		
 		swap(in, out);
 

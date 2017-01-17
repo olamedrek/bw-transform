@@ -1,3 +1,4 @@
+#include "radixsort.h"
 #include <cstdio>
 
 extern "C" {
@@ -9,11 +10,11 @@ void computeLocalPositions(int* in, int n, int* pos, int k, int* zerosInBlocks) 
 	int thid = blockDim.x * blockIdx.x + threadIdx.x;
 	int id = threadIdx.x;
 
-	__shared__ int sh[2048];
+	__shared__ int sh[THREADS_PER_BLOCK];
 
 	int realShSize = 
 		blockIdx.x == gridDim.x - 1 ? 
-		n - blockIdx.x * 2048 : 2048;
+		n - blockIdx.x * THREADS_PER_BLOCK : THREADS_PER_BLOCK;
 
 	if(id >= realShSize) return;
 
@@ -23,7 +24,7 @@ void computeLocalPositions(int* in, int n, int* pos, int k, int* zerosInBlocks) 
 
 	sh[id] = bit;
 
-	for(int offset = 1; offset < 2048; offset *= 2) {
+	for(int offset = 1; offset < THREADS_PER_BLOCK; offset *= 2) {
 		__syncthreads();
 
 		int tmp = 0;
@@ -63,7 +64,7 @@ void computeGlobalPositions(int* in, int n, int* pos, int k, int* zerosPref) {
 		(in[3 * thid] >> k) & 1 : 
 		(in[3 * thid + 1] >> (k - 32)) & 1;
 
-	int elementsBefore = blockIdx.x * 2048;
+	int elementsBefore = blockIdx.x * THREADS_PER_BLOCK;
 
 	int zerosBefore = 
 		blockIdx.x == 0 ? 
