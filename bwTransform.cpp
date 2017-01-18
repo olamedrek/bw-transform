@@ -61,13 +61,16 @@ char* bwEncode(char* str, int n) {
 char* bwDecode(char* encoded, int n) {
 	const int MAXCHAR = 256;
 	int cnt[MAXCHAR];
+	
+	int *id = new int[n];
 
 	for(int i = 0; i < MAXCHAR; i++) {
 		cnt[i] = 0;
 	}
 
 	for(int i = 0; i < n; i++) {
-		cnt[encoded[i]]++;
+		char c = encoded[i];
+		id[i] = cnt[c]++;
 	}
 	
 	for(int i = 1; i < MAXCHAR; i++) {
@@ -83,13 +86,13 @@ char* bwDecode(char* encoded, int n) {
 		char c = encoded[j];
 		decoded[i] = c;
 		
-		int cntc = 0;
-		for (int k = 0; k <= j; k++) if (encoded[k] == c) {
-			cntc++;
-		}
+		int prevEqual = id[j];
+		int totalSmaller = (c > 0 ? cnt[c-1] : 0);
 		
-		j = (c > 0 ? cnt[c-1] : 0) + cntc - 1;
+		j = totalSmaller + prevEqual;
 	}
+	
+	delete[] id;
 
 	return decoded;
 }
