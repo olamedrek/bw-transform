@@ -1,27 +1,31 @@
 #include "radixsort.h"
-#include "cuda.h"
 #include <cstdio>
 #include <climits>
 #include <algorithm>
 
 using namespace std;
 
+void cudaInit(CUcontext &cuContext) {
+	cuInit(0);
+	CUdevice cuDevice;
+	cuDeviceGet(&cuDevice, 0);
+
+	cuCtxCreate(&cuContext, 0, cuDevice);
+}
+
+void cudaDestory(CUcontext &cuContext) {
+	cuCtxDestroy(cuContext);
+}
+
 int* radixsort(int* T, int n) {
-    cuInit(0);
-    CUdevice cuDevice;
-    cuDeviceGet(&cuDevice, 0);
-    
-    CUcontext cuContext;
-    cuCtxCreate(&cuContext, 0, cuDevice);
-   
-    CUmodule cuModule = (CUmodule) 0;
-    cuModuleLoad(&cuModule, "radixsort.ptx");
-    
-    CUfunction computeLocalPositions, computeGlobalPositions, permute;
-    cuModuleGetFunction(&computeLocalPositions, cuModule, "computeLocalPositions");
-    cuModuleGetFunction(&computeGlobalPositions, cuModule, "computeGlobalPositions");
-    cuModuleGetFunction(&permute, cuModule, "permute");
-	
+	CUmodule cuModule = (CUmodule) 0;
+	cuModuleLoad(&cuModule, "radixsort.ptx");
+
+	CUfunction computeLocalPositions, computeGlobalPositions, permute;
+	cuModuleGetFunction(&computeLocalPositions, cuModule, "computeLocalPositions");
+	cuModuleGetFunction(&computeGlobalPositions, cuModule, "computeGlobalPositions");
+	cuModuleGetFunction(&permute, cuModule, "permute");
+
 	const int BLOCKS_PER_GRID = (n + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
 	cuMemHostRegister(T, sizeof(int) * n * 3, 0);
@@ -62,8 +66,6 @@ int* radixsort(int* T, int n) {
 	}
 
 	cuMemcpyDtoH(sorted, in, sizeof(int) * n * 3);
-	
-    cuCtxDestroy(cuContext);
 
 	delete[] zerosInBlocksHost;
 

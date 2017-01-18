@@ -1,9 +1,5 @@
-#include "cuda.h"
 #include "radixsort.h"
 #include "bwTransform.h"
-#include <cstdio>
-#include <climits>
-#include <algorithm>
 
 using namespace std;
 
@@ -14,6 +10,9 @@ void computeSuffixArray(char* str, int n, int* res) {
 	for(int i = 0; i < n; i++) {
 		positions[i] = str[i];
 	}
+
+	CUcontext cuContext;
+	cudaInit(cuContext);
 
 	for(int len = 1; len < n; len *= 2) {
 		for(int i = 0; i < n; i++) {
@@ -32,6 +31,8 @@ void computeSuffixArray(char* str, int n, int* res) {
 			}
 		}
 	}
+	
+	cudaDestory(cuContext);
 
 	for(int i = 0; i < n; i++) {
 		res[positions[i]] = i;
