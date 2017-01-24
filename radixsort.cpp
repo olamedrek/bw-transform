@@ -44,7 +44,7 @@ int* radixsort(int* T, int n) {
 	int* sorted = new int[n * 3];
 	cuMemHostRegister(sorted, sizeof(int) * n * 3, 0);
 	
-	for(int k = 32; k < 63; k++) {
+	for(int k = 0; k < 63; k++) {
 		void* args1[] = {&in, &n, &pos, &k, &zerosInBlocks};
 		cuLaunchKernel(computeLocalPositions, BLOCKS_PER_GRID, 1, 1, THREADS_PER_BLOCK, 1, 1, 0, 0, args1, 0);
 
@@ -60,9 +60,6 @@ int* radixsort(int* T, int n) {
 		cuLaunchKernel(permute, BLOCKS_PER_GRID, 1, 1, THREADS_PER_BLOCK, 1, 1, 0, 0, args3, 0);
 		
 		swap(in, out);
-
-		if(k == 62) k = -1;
-		if(k == 30) break;
 	}
 
 	cuMemcpyDtoH(sorted, in, sizeof(int) * n * 3);

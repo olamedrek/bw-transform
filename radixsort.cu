@@ -19,8 +19,8 @@ void computeLocalPositions(int* in, int n, int* pos, int k, int* zerosInBlocks) 
 	if(id >= realShSize) return;
 
 	int bit = k < 32 ? 
-		(in[3 * thid] >> k) & 1 : 
-		(in[3 * thid + 1] >> (k - 32)) & 1;
+		(in[3 * thid + 1] >> k) & 1 : 
+		(in[3 * thid] >> (k - 32)) & 1;
 
 	sh[id] = bit;
 
@@ -61,8 +61,8 @@ void computeGlobalPositions(int* in, int n, int* pos, int k, int* zerosPref) {
 	if(thid >= n) return;
 
 	int bit = k < 32 ? 
-		(in[3 * thid] >> k) & 1 : 
-		(in[3 * thid + 1] >> (k - 32)) & 1;
+		(in[3 * thid + 1] >> k) & 1 : 
+		(in[3 * thid] >> (k - 32)) & 1;
 
 	int elementsBefore = blockIdx.x * THREADS_PER_BLOCK;
 

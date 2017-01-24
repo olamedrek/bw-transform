@@ -1,7 +1,5 @@
 #include "bwTransform.h"
 #include <cstdio>
-#include <sys/mman.h>
-#include <cstdlib>
 
 using namespace std;
 
