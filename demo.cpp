@@ -5,11 +5,11 @@ using namespace std;
 
 int main() {
 	int n;
-	scanf("%d", &n);
+	scanf("%d\n", &n);
 
 	char* in = new char[n + 2];
 	in[0] = START_SYMBOL; 
-	scanf("%s", in + 1);
+	fgets(in + 1, n + 1, stdin);
 	in[n+1] = END_SYMBOL;
 	
 	printf("Input:\n%.*s\n\n", n, in + 1);
