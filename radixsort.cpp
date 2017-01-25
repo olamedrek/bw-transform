@@ -5,64 +5,71 @@
 
 using namespace std;
 
-void cudaInit(CUcontext &cuContext) {
-	cuInit(0);
-	CUdevice cuDevice;
-	cuDeviceGet(&cuDevice, 0);
+void cuCall(CUresult res) {
+    if (res != CUDA_SUCCESS) {
+        printf("cuda error: %d\n", res);
+        exit(1);
+    }
+}
 
-	cuCtxCreate(&cuContext, 0, cuDevice);
+void cudaInit(CUcontext &cuContext) {
+	cuCall(cuInit(0));
+	CUdevice cuDevice;
+	cuCall(cuDeviceGet(&cuDevice, 0));
+
+	cuCall(cuCtxCreate(&cuContext, 0, cuDevice));
 }
 
 void cudaDestory(CUcontext &cuContext) {
-	cuCtxDestroy(cuContext);
+	cuCall(cuCtxDestroy(cuContext));
 }
 
 int* radixsort(int* T, int n) {
 	CUmodule cuModule = (CUmodule) 0;
-	cuModuleLoad(&cuModule, "radixsort.ptx");
+	cuCall(cuModuleLoad(&cuModule, "radixsort.ptx"));
 
 	CUfunction computeLocalPositions, computeGlobalPositions, permute;
-	cuModuleGetFunction(&computeLocalPositions, cuModule, "computeLocalPositions");
-	cuModuleGetFunction(&computeGlobalPositions, cuModule, "computeGlobalPositions");
-	cuModuleGetFunction(&permute, cuModule, "permute");
+	cuCall(cuModuleGetFunction(&computeLocalPositions, cuModule, "computeLocalPositions"));
+	cuCall(cuModuleGetFunction(&computeGlobalPositions, cuModule, "computeGlobalPositions"));
+	cuCall(cuModuleGetFunction(&permute, cuModule, "permute"));
 
 	const int BLOCKS_PER_GRID = (n + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-	cuMemHostRegister(T, sizeof(int) * n * 3, 0);
+	cuCall(cuMemHostRegister(T, sizeof(int) * n * 3, 0));
 
 	CUdeviceptr in, pos, out, zerosInBlocks;
-	cuMemAlloc(&in, sizeof(int) * n * 3);
-	cuMemAlloc(&pos, sizeof(int) * n);
-	cuMemAlloc(&out, sizeof(int) * n * 3);
-	cuMemAlloc(&zerosInBlocks, sizeof(int) * BLOCKS_PER_GRID);
+	cuCall(cuMemAlloc(&in, sizeof(int) * n * 3));
+	cuCall(cuMemAlloc(&pos, sizeof(int) * n));
+	cuCall(cuMemAlloc(&out, sizeof(int) * n * 3));
+	cuCall(cuMemAlloc(&zerosInBlocks, sizeof(int) * BLOCKS_PER_GRID));
 
-	cuMemcpyHtoD(in, T, sizeof(int) * n * 3);
+	cuCall(cuMemcpyHtoD(in, T, sizeof(int) * n * 3));
 	
 	int* zerosInBlocksHost = new int[BLOCKS_PER_GRID];
-	cuMemHostRegister(zerosInBlocksHost, sizeof(int) * BLOCKS_PER_GRID, 0);
+	cuCall(cuMemHostRegister(zerosInBlocksHost, sizeof(int) * BLOCKS_PER_GRID, 0));
 	
 	int* sorted = new int[n * 3];
-	cuMemHostRegister(sorted, sizeof(int) * n * 3, 0);
+	cuCall(cuMemHostRegister(sorted, sizeof(int) * n * 3, 0));
 	
 	for(int k = 0; k < 63; k++) {
 		void* args1[] = {&in, &n, &pos, &k, &zerosInBlocks};
-		cuLaunchKernel(computeLocalPositions, BLOCKS_PER_GRID, 1, 1, THREADS_PER_BLOCK, 1, 1, 0, 0, args1, 0);
+		cuCall(cuLaunchKernel(computeLocalPositions, BLOCKS_PER_GRID, 1, 1, THREADS_PER_BLOCK, 1, 1, 0, 0, args1, 0));
 
-		cuMemcpyDtoH(zerosInBlocksHost, zerosInBlocks, sizeof(int) * BLOCKS_PER_GRID);
+		cuCall(cuMemcpyDtoH(zerosInBlocksHost, zerosInBlocks, sizeof(int) * BLOCKS_PER_GRID));
 		for(int i = 1; i < BLOCKS_PER_GRID; i++)
 			zerosInBlocksHost[i] += zerosInBlocksHost[i-1];
-		cuMemcpyHtoD(zerosInBlocks, zerosInBlocksHost, sizeof(int) * BLOCKS_PER_GRID);
+		cuCall(cuMemcpyHtoD(zerosInBlocks, zerosInBlocksHost, sizeof(int) * BLOCKS_PER_GRID));
 
 		void* args2[] = {&in, &n, &pos, &k, &zerosInBlocks};
-		cuLaunchKernel(computeGlobalPositions, BLOCKS_PER_GRID, 1, 1, THREADS_PER_BLOCK, 1, 1, 0, 0, args2, 0);
+		cuCall(cuLaunchKernel(computeGlobalPositions, BLOCKS_PER_GRID, 1, 1, THREADS_PER_BLOCK, 1, 1, 0, 0, args2, 0));
 		
 		void* args3[] = {&in, &n, &out, &pos};
-		cuLaunchKernel(permute, BLOCKS_PER_GRID, 1, 1, THREADS_PER_BLOCK, 1, 1, 0, 0, args3, 0);
+		cuCall(cuLaunchKernel(permute, BLOCKS_PER_GRID, 1, 1, THREADS_PER_BLOCK, 1, 1, 0, 0, args3, 0));
 		
 		swap(in, out);
 	}
 
-	cuMemcpyDtoH(sorted, in, sizeof(int) * n * 3);
+	cuCall(cuMemcpyDtoH(sorted, in, sizeof(int) * n * 3));
 
 	delete[] zerosInBlocksHost;
 
