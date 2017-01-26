@@ -71,6 +71,10 @@ int* radixsort(int* T, int n) {
 
 	cuCall(cuMemcpyDtoH(sorted, in, sizeof(int) * n * 3));
 
+	cuCall(cuMemHostUnregister(T));
+	cuCall(cuMemHostUnregister(zerosInBlocksHost));
+	cuCall(cuMemHostUnregister(sorted));
+
 	delete[] zerosInBlocksHost;
 
 	return sorted; 
