@@ -50,7 +50,9 @@ char* bwEncodeNonparallel(char* str, int n) {
 	return encoded;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+	bool verbose = (argc > 1 && string(argv[1]) == VERBOSE_FLAG);
+
 	int n;
 	scanf("%d\n", &n);
 
@@ -59,15 +61,21 @@ int main() {
 	fgets(in + 1, n + 1, stdin);
 	in[n+1] = END_SYMBOL;
 	
-	printf("Input:\n%.*s\n\n", n, in + 1);
+	if (verbose) {
+		printf("Input:\n%.*s\n\n", n, in + 1);
+	}
 
 	char* out = bwEncodeNonparallel(in, n + 2);
 	
-	printf("Encoded:\n%.*s\n\n", n + 2, out);
+	if (verbose) {
+		printf("Encoded:\n%.*s\n\n", n + 2, out);
+	}
 	
 	char* dec = bwDecode(out, n + 2);
 	
-	printf("Decoded:\n%.*s\n\n", n, dec + 1);
+	if (verbose) {
+		printf("Decoded:\n%.*s\n\n", n, dec + 1);
+	}
 
 	bool ok = true;
 	for (int i = 0; i < n + 2; i++) if (in[i] != dec[i]) {
