@@ -14,7 +14,7 @@ void computeSuffixArray(char* str, int n, int* res) {
 	CUcontext cuContext;
 	cudaInit(cuContext);
 
-	for(int len = 1; len < n; len *= 2) {
+	for(int len = 1; ; len *= 2) {
 		for(int i = 0; i < n; i++) {
 			curr[3 * i] = positions[i];
 			curr[3 * i + 1] = i + len < n ? positions[i + len] : -1;
@@ -29,6 +29,10 @@ void computeSuffixArray(char* str, int n, int* res) {
 			} else {
 				positions[curr[3 * i + 2]] = ++prevPos;
 			}
+		}
+		
+		if (positions[n-1] == n-1) {
+			break;
 		}
 	}
 	
