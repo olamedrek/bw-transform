@@ -36,7 +36,7 @@ void computeSuffixArray(char* str, int n, int* res) {
 		}
 	}
 	
-	cudaDestory(cuContext);
+	cudaDestroy(cuContext);
 
 	for(int i = 0; i < n; i++) {
 		res[positions[i]] = i;

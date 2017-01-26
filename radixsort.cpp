@@ -20,7 +20,7 @@ void cudaInit(CUcontext &cuContext) {
 	cuCall(cuCtxCreate(&cuContext, 0, cuDevice));
 }
 
-void cudaDestory(CUcontext &cuContext) {
+void cudaDestroy(CUcontext &cuContext) {
 	cuCall(cuCtxDestroy(cuContext));
 }
 
